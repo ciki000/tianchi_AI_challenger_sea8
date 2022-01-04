@@ -33,14 +33,17 @@ def lightchange(image):
  
     return image
 
-image = np.load('./datasets/test_3PGD-10_densenet_image.npy')
-label = np.load('./datasets/test_3PGD-10_densenet_label.npy')
-#print(image.shape)
+image = np.load('./datasets/cifar_test_image.npy')
+label = np.load('./datasets/cifar_test_label.npy')
+# light
+# for i in range(image.shape[0]):
+#     image[i] = lightchange(image[i])
+
+# blur
 for i in range(image.shape[0]):
-    image[i] = lightchange(image[i])
+     image[i] = cv2.GaussianBlur(image[i], (3,3), 0)
 
-
-image = image.astype(np.uint8)
+image = np.round(image).astype(np.uint8)
 #print(image.shape)
-np.save('./datasets/test_light_3PGD-10_densenet_image.npy', image)
-np.save('./datasets/test_light_3PGD-10_densenet_label.npy', label)
+np.save('./datasets/test_blur_image.npy', image)
+np.save('./datasets/test_blur_label.npy', label)

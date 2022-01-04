@@ -18,7 +18,7 @@ from config import args_resnet, args_densenet
 from utils import load_model, AverageMeter, accuracy
 
 
-datasets = ['./datasets/cifar_test', './datasets/test_PGD-10_densenet', './datasets/test_2PGD-10_resnet']
+datasets = ['./datasets/train_PGD-8_densenet']
 images = []
 labels = []
 for dataset in datasets:

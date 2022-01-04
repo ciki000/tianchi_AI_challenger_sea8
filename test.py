@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import random
 import shutil
 from tqdm import tqdm
@@ -21,13 +21,14 @@ from utils import load_model, AverageMeter, accuracy
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('./datasets/test_3PGD-10_resnet_image.npy')
-        labels = np.load('./datasets/test_3PGD-10_resnet_label.npy')
+        images = np.load('./datasets/cifar_wasserstein_image.npy')
+        labels = np.load('./datasets/cifar_wasserstein_label.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
         assert images.shape[1:] == (32, 32, 3)
         self.images = [Image.fromarray(x) for x in images]
+        #self.images = images
         self.labels = labels / labels.sum(axis=1, keepdims=True) # normalize
         self.labels = self.labels.astype(np.float32)
         self.transform = transform
@@ -49,8 +50,8 @@ torch.backends.cudnn.deterministic = True
 
 # Data
 transform_test = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
+            #transforms.RandomCrop(32, padding=4),
+            #transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
@@ -59,10 +60,10 @@ testloader = data.DataLoader(testset, batch_size=128, shuffle=False, num_workers
 
 # Model
 resnet = load_model('resnet50').cuda()
-resnet.load_state_dict(torch.load('./checkpoints/resnet_test_2PGD-10dr.pth')['state_dict'])
+resnet.load_state_dict(torch.load('./checkpoints/resnet_train_PGD-8d.pth')['state_dict'])
 resnet.eval()
 densenet = load_model('densenet121').cuda()
-densenet.load_state_dict(torch.load('./checkpoints/densenet_test_2PGD-10dr.pth')['state_dict'])
+densenet.load_state_dict(torch.load('./checkpoints/densenet_train_PGD-8d.pth')['state_dict'])
 densenet.eval()
 
 resnet_accs = AverageMeter()
