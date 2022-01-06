@@ -146,9 +146,14 @@ cython_debug/
 /data/
 /datasets/
 /show/
+*.npy
+*.tar
+*.pth 
 
 #ignore other
 #ignore nohup
 nohup.out
+
+
 
 
