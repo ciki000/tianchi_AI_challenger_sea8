@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import random
 import shutil
 from tqdm import tqdm
@@ -24,8 +24,8 @@ from torchattacks import CW, PGD
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('./datasets/cifar_train_image.npy')
-        labels = np.load('./datasets/cifar_train_label.npy')
+        images = np.load('./datasets/cifar_test_image.npy')
+        labels = np.load('./datasets/cifar_test_label.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
@@ -123,11 +123,11 @@ def attack(models, x, y, iter=10, eps=0.001):
 
     labels = torch.topk(y, 1)[1].squeeze(1)
     # atk_resnet = CW(norm_resnet, c=50, kappa=0, steps=1000, lr=0.01)
-    # atk_resnet = PGD(norm_resnet, eps=12/255, alpha=2/255, steps=40, random_start=False)
+    atk_resnet = PGD(norm_resnet, eps=12/255, alpha=2/255, steps=40, random_start=False)
     # atk_densenet = CW(norm_densenet, c=5, kappa=0, steps=1000, lr=0.01)
-    atk_densenet = PGD(norm_densenet, eps=8/255, alpha=2/255, steps=40, random_start=False)
-    # adv_images = atk_resnet(x, labels)
-    adv_images = atk_densenet(x, labels)
+    # atk_densenet = PGD(norm_densenet, eps=4/255, alpha=2/255, steps=40, random_start=False)
+    adv_images = atk_resnet(x, labels)
+    #adv_images = atk_densenet(x, labels)
     return adv_images
 
 use_cuda = torch.cuda.is_available()
@@ -150,10 +150,10 @@ testloader = data.DataLoader(testset, batch_size=128, shuffle=False)
 
 # Model
 resnet = load_model('resnet50').cuda()
-resnet.load_state_dict(torch.load('./checkpoints/resnet_train.pth')['state_dict'])
+resnet.load_state_dict(torch.load('./checkpoints/resnet_test_2PGD-12dr.pth')['state_dict'])
 resnet.eval()
 densenet = load_model('densenet121').cuda()
-densenet.load_state_dict(torch.load('./checkpoints/densenet_train.pth')['state_dict'])
+densenet.load_state_dict(torch.load('./checkpoints/densenet_test_2PGD-12dr.pth')['state_dict'])
 densenet.eval()
 
 resnet_accs = AverageMeter()
@@ -182,5 +182,5 @@ for (input_, soft_label) in tqdm(testloader):
 images_adv = np.round(np.array(inputs_adv)).astype(np.uint8)
 labels_adv = np.array(labels)
 
-np.save('./datasets/train_PGD-8_densenet_image.npy', images_adv)
-np.save('./datasets/train_PGD-8_densenet_label.npy', labels_adv)
+np.save('./datasets/test_3PGD-12_resnet_image.npy', images_adv)
+np.save('./datasets/test_3PGD-12_resnet_label.npy', labels_adv)

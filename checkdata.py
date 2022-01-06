@@ -20,9 +20,10 @@ from PIL import Image
 
 
 
-images_origin = np.load('./datasets/cifar_train_image.npy')
-images = np.load('./datasets/train_PGD-12_densenet_image.npy')
-# labels = np.load('./cifar_color_label.npy')
+images_origin = np.load('./datasets/cifar_test_image.npy')
+images = np.load('./datasets/test_gaussian_image.npy')
+# labels_origin = np.load('./datasets/cifar_train2_label.npy')
+# labels = np.load('./datasets/train2_PGD-8_densenet_label.npy')
 # images_origin = images_origin / images_origin.sum(axis=1, keepdims=True)
 # merge = (images_origin + images)/2.
 # np.save('./cifar_distill_label.npy', merge)
@@ -32,6 +33,7 @@ images = np.load('./datasets/train_PGD-12_densenet_image.npy')
 # print(images_origin[1])
 # print(images[1])
 
+classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 showlist = [0,1,2,3,4]
 for i in showlist:
     image_origin = Image.fromarray(images_origin[i])
@@ -43,8 +45,10 @@ for i in showlist:
     # print(images[i][0][0])
     # #print(images_origin[i][0][0])
     # print("!!!")
-    image_origin.save('./show/train'+str(i)+'.png')
-    image.save('./show/t—PGD'+str(i)+'.png')
+    #print(classes[np.argmax(labels_origin[i])])
+    #print(classes[np.argmax(labels[i])])
+    image_origin.save('./show/test'+str(i)+'.png')
+    image.save('./show/test—gaussian'+str(i)+'.png')
     # print(labels[i])
 print(images.shape)
 # print('origin:', images_origin[0][0][0])

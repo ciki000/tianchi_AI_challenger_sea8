@@ -33,17 +33,43 @@ def lightchange(image):
  
     return image
 
+def addsaltnoise(image, p=0.8):
+    h = image.shape[0]
+    w = image.shape[1]
+    c = image.shape[2]
+    #print(h, w)
+    mask = np.random.choice((0,1,2), size=(h, w, 1), p=[(1-p)/2., (1-p)/2., p])
+    mask = np.repeat(mask, c, axis=2)
+    image[mask == 0] = 0
+    image[mask == 1] = 255
+    return image
+
+def addgaussiannoise(image, mean=0, var=0.001):
+    noise = np.random.normal(mean, var ** 0.5, image.shape)
+    image = np.clip(image+noise*255, 0, 255)
+    return image
+
 image = np.load('./datasets/cifar_test_image.npy')
 label = np.load('./datasets/cifar_test_label.npy')
-# light
+
+# 亮度调节
 # for i in range(image.shape[0]):
 #     image[i] = lightchange(image[i])
 
-# blur
+# 模糊
+# for i in range(image.shape[0]):
+#      image[i] = cv2.GaussianBlur(image[i], (3,3), 0)
+
+# 椒盐
+# for i in range(image.shape[0]):
+#     image[i] = addsaltnoise(image[i])
+
+  
+# 高斯噪声
 for i in range(image.shape[0]):
-     image[i] = cv2.GaussianBlur(image[i], (3,3), 0)
+    image[i] = addgaussiannoise(image[i])
 
 image = np.round(image).astype(np.uint8)
 #print(image.shape)
-np.save('./datasets/test_blur_image.npy', image)
-np.save('./datasets/test_blur_label.npy', label)
+np.save('./datasets/test_gaussian_image.npy', image)
+np.save('./datasets/test_gaussian_label.npy', label)
