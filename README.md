@@ -6,6 +6,7 @@
 2. PGD12d+2PGD12r+3PGD12d+gaussian+wasserstein: 97.5600
 3. PGD12d+2PGD12r+3PGD12d+3PGD12r+wasserstein: 97.5082
 4. PGD12d+2PGD12r+3PGD12d+salt+wasserstein: 97.3802
+5. PGD12d+2PGD12r+3PGD12r+light+wasserstein: 98.2233
 ## 心得
 
 densenet121比resnet50鲁棒
