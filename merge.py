@@ -18,19 +18,30 @@ from config import args_resnet, args_densenet
 from utils import load_model, AverageMeter, accuracy
 
 
-datasets = ['./datasets/test_PGD-12_densenet', './datasets/test_2PGD-12_resnet', './datasets/test_3PGD-12_resnet',  './datasets/test_light', './datasets/cifar_wasserstein']
+datasets = ['./datasets/test_PGD-12_densenet', './datasets/test_2PGD-12_resnet', './datasets/test_DIFGSM_resnet',  './datasets/test_light', './datasets/cifar_wasserstein']
 # datasets = ['./datasets/cifar_train1', './datasets/train2_PGD-8_densenet', './datasets/train3_PGD-8_resnet', './datasets/train4_PGD-4_densenet', './datasets/train5_PGD-4_resnet']
 images = []
 labels = []
+cnt = 0
 for dataset in datasets:
     cur_images = np.load(dataset+'_image.npy')
     cur_labels = np.load(dataset+'_label.npy')
     for i in range(cur_images.shape[0]):
+        cnt = cnt + 1
         images.append(cur_images[i])
         labels.append(cur_labels[i])
 
-images_merge = np.array(images).astype(np.uint8)
-labels_merge = np.array(labels)
+index = [x for x in range(cnt)]
+random.shuffle(index)
+
+random_images = []
+random_labels = []
+for i in range(cnt):
+    random_images.append(images[index[i]])
+    random_labels.append(labels[index[i]])
+
+images_merge = np.array(random_images).astype(np.uint8)
+labels_merge = np.array(random_labels)
 
 print(images_merge.shape, labels_merge.shape)
 np.save('data.npy', images_merge)

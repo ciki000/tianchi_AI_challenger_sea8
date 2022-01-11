@@ -21,7 +21,7 @@ from PIL import Image
 
 
 images_origin = np.load('./datasets/cifar_test_image.npy')
-images = np.load('./datasets/test_gaussian_image.npy')
+images = np.load('./datasets/test_3PGD-12_resnet_image.npy')
 # labels_origin = np.load('./datasets/cifar_train2_label.npy')
 # labels = np.load('./datasets/train2_PGD-8_densenet_label.npy')
 # images_origin = images_origin / images_origin.sum(axis=1, keepdims=True)
@@ -48,7 +48,7 @@ for i in showlist:
     #print(classes[np.argmax(labels_origin[i])])
     #print(classes[np.argmax(labels[i])])
     image_origin.save('./show/test'+str(i)+'.png')
-    image.save('./show/test—gaussian'+str(i)+'.png')
+    image.save('./show/3PGD-r'+str(i)+'.png')
     # print(labels[i])
 print(images.shape)
 # print('origin:', images_origin[0][0][0])

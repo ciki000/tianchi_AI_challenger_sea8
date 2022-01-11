@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import random
 import shutil
 from tqdm import tqdm
@@ -21,8 +21,8 @@ from utils import load_model, AverageMeter, accuracy
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('./datasets/test_3PGD-12_resnet_image.npy')
-        labels = np.load('./datasets/test_3PGD-12_resnet_label.npy')
+        images = np.load('./datasets/test_DIFGSM_resnet_image.npy')
+        labels = np.load('./datasets/test_DIFGSM_resnet_label.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
@@ -60,20 +60,30 @@ testloader = data.DataLoader(testset, batch_size=128, shuffle=False, num_workers
 
 # Model
 resnet = load_model('resnet50').cuda()
-resnet.load_state_dict(torch.load('./checkpoints/resnet_test_2PGD-12dr.pth')['state_dict'])
+resnet.load_state_dict(torch.load('./checkpoints/resnet_test_PGD-12d.pth')['state_dict'])
 resnet.eval()
 densenet = load_model('densenet121').cuda()
-densenet.load_state_dict(torch.load('./checkpoints/densenet_test_2PGD-12dr.pth')['state_dict'])
+densenet.load_state_dict(torch.load('./checkpoints/densenet_test_PGD-12d.pth')['state_dict'])
 densenet.eval()
 
 resnet_accs = AverageMeter()
 densenet_accs = AverageMeter()
+
+SoftLabels = []
 for (input_, soft_label) in tqdm(testloader):
     input_, soft_label = input_.cuda(), soft_label.cuda()
     target = soft_label.argmax(dim=1)
 
     resnet_output = resnet(input_)
+    # print(target, F.softmax(resnet_output, dim=1))
+    # break
     densenet_output = densenet(input_)
+    
+    # soft_res = F.softmax(resnet_output, dim=1).cpu().detach().numpy()
+    # soft_dense = F.softmax(densenet_output, dim=1).cpu().detach().numpy()
+
+    # for i in range(soft_res.shape[0]):
+    #     SoftLabels.append((soft_res[i]+soft_dense[i])/2)
 
     resnet_acc = accuracy(resnet_output, target)
     densenet_acc = accuracy(densenet_output, target)
@@ -81,5 +91,6 @@ for (input_, soft_label) in tqdm(testloader):
     resnet_accs.update(resnet_acc[0].item(), input_.size(0))
     densenet_accs.update(densenet_acc[0].item(), input_.size(0))
 
-
+# soft_labels = np.array(SoftLabels)
+# np.save('soft_label.npy', soft_labels)
 print(resnet_accs.avg, densenet_accs.avg)

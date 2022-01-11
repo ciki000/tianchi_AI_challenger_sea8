@@ -28,7 +28,10 @@ import cv2
 
 def lightchange(image):
     
-    light = random.uniform(0.8, 0.9)
+    # base: 0.8-0.9
+    # 2: 0.85-0.95
+    # 3: 0.75-0.88
+    light = random.uniform(0.75, 0.88)
     image  = np.power(image, light)
  
     return image
@@ -53,8 +56,8 @@ image = np.load('./datasets/cifar_test_image.npy')
 label = np.load('./datasets/cifar_test_label.npy')
 
 # 亮度调节
-# for i in range(image.shape[0]):
-#     image[i] = lightchange(image[i])
+for i in range(image.shape[0]):
+    image[i] = lightchange(image[i])
 
 # 模糊
 # for i in range(image.shape[0]):
@@ -66,10 +69,10 @@ label = np.load('./datasets/cifar_test_label.npy')
 
   
 # 高斯噪声
-for i in range(image.shape[0]):
-    image[i] = addgaussiannoise(image[i])
+# for i in range(image.shape[0]):
+#     image[i] = addgaussiannoise(image[i])
 
 image = np.round(image).astype(np.uint8)
 #print(image.shape)
-np.save('./datasets/test_gaussian_image.npy', image)
-np.save('./datasets/test_gaussian_label.npy', label)
+np.save('./datasets/test_light3_image.npy', image)
+np.save('./datasets/test_light3_label.npy', label)

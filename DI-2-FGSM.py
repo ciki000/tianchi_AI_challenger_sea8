@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import random
 import shutil
 from tqdm import tqdm
@@ -20,12 +20,12 @@ from config import args_resnet, args_densenet
 from utils import load_model, AverageMeter, accuracy
 
 import torchattacks
-from torchattacks import CW, PGD, DIFGSM
+from torchattacks import CW, PGD
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('./datasets/cifar_test_image.npy')
-        labels = np.load('./datasets/cifar_test_label.npy')
+        images = np.load('./datasets/test_light_image.npy')
+        labels = np.load('./datasets/test_light_label.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
@@ -41,71 +41,51 @@ class MyDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.labels)
 
-class Normalize(nn.Module):
-    def __init__(self, mean, std) :
-        super(Normalize, self).__init__()
-        self.register_buffer('mean', torch.Tensor(mean))
-        self.register_buffer('std', torch.Tensor(std))
-        
-    def forward(self, input):
-        # Broadcasting
-        mean = self.mean.reshape(1, 3, 1, 1)
-        std = self.std.reshape(1, 3, 1, 1)
-        return (input - mean) / std
 
-def cross_entropy(outputs, smooth_labels):
-    loss = torch.nn.KLDivLoss(reduction='batchmean')
-    return loss(F.log_softmax(outputs, dim=1), smooth_labels)
+class MIDIFGSM(Attacker):
+    def __init__(self, model, config, target=None):
+        super(MIFGSM, self).__init__(model, config)
+        self.target = target
 
-def FGSM(model, x, label, eps=0.001):
-    x_new = x 
-    x_new = Variable(x_new, requires_grad=True)
-    
-    y_pred = model(x_new)
-    loss = cross_entropy(y_pred, label)
+    def forward(self, x, y):
+        """
+        :param x: Inputs to perturb
+        :param y: Ground-truth label
+        :param target : Target label 
+        :return adversarial image
+        """
+        alpha = self.config['eps'] / self.config['attack_steps'] 
+        decay = 1.0
+        x_adv = x.detach().clone()
+        momentum = torch.zeros_like(x_adv, device=x.device)
+        if self.config['random_init'] :
+            x_adv = x_adv + (torch.rand(x.size(), dtype=x.dtype, device=x.device) - 0.5) * 2 * self.config['eps']
+            x_adv = torch.clamp(x_adv,*self.clamp)
 
-    model.zero_grad()
-    loss.backward()
-    grad = x_new.grad.cpu().detach().numpy()
-    grad = np.sign(grad)
-    pertubation = grad * eps
-    adv_x = x.cpu().detach().numpy() + pertubation
-    #adv_x = np.clip(adv_x, clip_min, clip_max)
 
-    x_adv = torch.from_numpy(adv_x).cuda()
-    return x_adv
+        for step in range(self.config['attack_steps']):
+            x.requires_grad=True
+            logit = self.model(x)
+            if self.target is None:
+                cost = -F.cross_entropy(logit, y)
+            else:
+                cost = F.cross_entropy(logit, target)
+            grad = torch.autograd.grad(cost, x, retain_graph=False, create_graph=False)[0]
+            grad_norm = torch.norm(grad, p=1)
+            grad /= grad_norm
+            grad += momentum*decay
+            momentum = grad
+            x_adv = x - alpha*grad.sign()
+            a = torch.clamp(x - self.config['eps'], min=0)
+            b = (x_adv >= a).float()*x_adv + (a > x_adv).float()*a
+            c = (b > x + self.config['eps']).float() * (x + self.config['eps']) + (
+                x + self.config['eps'] >= b
+            ).float() * b
+            x = torch.clamp(c, max=1).detach()
+        x_adv = torch.clamp(x, *self.clamp)
+        return x_adv
 
 def attack(models, x, y, iter=10, eps=0.001):
-    
-    ## My implementation
-
-    # for i in range(iter):
-    #     for model in models:
-    #         x = FGSM(model, x, label, eps)
-
-
-
-    ## Use deeprobust
-
-    # PGD
-    # adversary_resnet = PGD(models[0])
-    # adversary_densenet = PGD(models[1])
-    # attack_params = {'epsilon': 0.1/iter, 'clip_max': 10000.0, 'clip_min': -10000.0, 'num_steps': 5, 'print_process': False}
-    # for i in range(iter):
-    #     x = adversary_resnet.generate(x, y, **attack_params)
-    #     x = adversary_densenet.generate(x, y, **attack_params)
-
-    # CW
-    # adversary_resnet = CarliniWagner(models[0])
-    # adversary_densenet = CarliniWagner(models[1])
-    # attack_params = {'epsilon': 0.1/iter, 'clip_max': 10000.0, 'clip_min': -10000.0, 'num_steps': 5, 'print_process': False}
-    # for i in range(iter):
-    #     x = adversary_resnet.generate(x, y, **attack_params)
-    #     x = adversary_densenet.generate(x, y, **attack_params)
-
-
-
-    ## Use torchattacks
 
     norm_layer = Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
 
@@ -122,13 +102,8 @@ def attack(models, x, y, iter=10, eps=0.001):
     norm_densenet.eval()
 
     labels = torch.topk(y, 1)[1].squeeze(1)
-    # atk_resnet = CW(norm_resnet, c=50, kappa=0, steps=1000, lr=0.01)
-    # atk_resnet = PGD(norm_resnet, eps=4/255, alpha=2/255, steps=40, random_start=False)
-    atk_resnet = DIFGSM(norm_resnet, eps=12/255, alpha=2/255, decay=1.0, steps=40, random_start=True)
-    # atk_densenet = CW(norm_densenet, c=5, kappa=0, steps=1000, lr=0.01)
-    # atk_densenet = PGD(norm_densenet, eps=4/255, alpha=2/255, steps=40, random_start=False)
+    atk = PGD(norm_resnet, eps=4/255, alpha=2/255, steps=40, random_start=False)
     adv_images = atk_resnet(x, labels)
-    #adv_images = atk_densenet(x, labels)
     return adv_images
 
 use_cuda = torch.cuda.is_available()
@@ -183,5 +158,5 @@ for (input_, soft_label) in tqdm(testloader):
 images_adv = np.round(np.array(inputs_adv)).astype(np.uint8)
 labels_adv = np.array(labels)
 
-np.save('./datasets/test_DIFGSM_resnet_image.npy', images_adv)
-np.save('./datasets/test_DIFGSM_resnet_label.npy', labels_adv)
+np.save('./datasets/test_light_r4_image.npy', images_adv)
+np.save('./datasets/test_light_r4_label.npy', labels_adv)
