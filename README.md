@@ -14,6 +14,7 @@
 10. PGD12d+2PGD12r+3PGD12r+light_78-85+wasserstein: 98.0922
 11. PGD12d+2PGD12r+3PGD12r+light+wasserstein+softlabel: 97.9325
 12. PGD12d+2PGD12r+test+light+wasserstein: 97.8097
+12. PGD12d+2PGD12r+MI-DI-FGSM+light+wasserstein: 96.7933
 
 ## 心得
 

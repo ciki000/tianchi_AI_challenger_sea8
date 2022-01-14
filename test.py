@@ -21,8 +21,8 @@ from utils import load_model, AverageMeter, accuracy
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('./datasets/test_DIFGSM_resnet_image.npy')
-        labels = np.load('./datasets/test_DIFGSM_resnet_label.npy')
+        images = np.load('./datasets/cifar_wasserstein_image.npy')
+        labels = np.load('./datasets/cifar_wasserstein_label.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
@@ -60,10 +60,10 @@ testloader = data.DataLoader(testset, batch_size=128, shuffle=False, num_workers
 
 # Model
 resnet = load_model('resnet50').cuda()
-resnet.load_state_dict(torch.load('./checkpoints/resnet_test_PGD-12d.pth')['state_dict'])
+resnet.load_state_dict(torch.load('./checkpoints/resnet_test_2PGD-12dr.pth')['state_dict'])
 resnet.eval()
 densenet = load_model('densenet121').cuda()
-densenet.load_state_dict(torch.load('./checkpoints/densenet_test_PGD-12d.pth')['state_dict'])
+densenet.load_state_dict(torch.load('./checkpoints/densenet_test_2PGD-12dr.pth')['state_dict'])
 densenet.eval()
 
 resnet_accs = AverageMeter()
