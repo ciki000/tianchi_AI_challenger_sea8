@@ -142,14 +142,11 @@ cython_debug/
 
 #ignore data
 /back-up/
-/checkpoints/
 /data/
-/datasets/
-/show/
 *.npy
 *.tar
 *.pth 
-
+*.zip
 #ignore other
 #ignore nohup
 nohup.out
