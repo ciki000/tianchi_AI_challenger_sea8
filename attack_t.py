@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import random
 import shutil
 from tqdm import tqdm
@@ -20,12 +20,12 @@ from config import args_resnet, args_densenet
 from utils import load_model, AverageMeter, accuracy
 
 import torchattacks
-from torchattacks import CW, PGD, DIFGSM
+from torchattacks import CW, PGD, DIFGSM, AutoAttack, APGD, Jitter
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('./datasets/cifar_test_image.npy')
-        labels = np.load('./datasets/cifar_test_label.npy')
+        images = np.load('./datasets/cifar_train5_image.npy')
+        labels = np.load('./datasets/cifar_train5_label.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
@@ -122,13 +122,23 @@ def attack(models, x, y, iter=10, eps=0.001):
     norm_densenet.eval()
 
     labels = torch.topk(y, 1)[1].squeeze(1)
-    # atk_resnet = CW(norm_resnet, c=50, kappa=0, steps=1000, lr=0.01)
-    # atk_resnet = PGD(norm_resnet, eps=4/255, alpha=2/255, steps=40, random_start=False)
-    atk_resnet = DIFGSM(norm_resnet, eps=12/255, alpha=2/255, decay=1.0, steps=40, random_start=True)
-    # atk_densenet = CW(norm_densenet, c=5, kappa=0, steps=1000, lr=0.01)
-    # atk_densenet = PGD(norm_densenet, eps=4/255, alpha=2/255, steps=40, random_start=False)
+    
+    # atk_resnet = CW(norm_resnet, c=1, kappa=0, steps=1000, lr=0.01)
+    atk_resnet = PGD(norm_resnet, eps=8/255, alpha=1/255, steps=40, random_start=True)
+    # atk_resnet = DIFGSM(norm_resnet, eps=8/255, alpha=2/255, decay=0.0, steps=20, random_start=True)
+    # atk_resnet = AutoAttack(norm_resnet, norm='Linf', eps=8/255, version='standard', n_classes=10, seed=None, verbose=False)
+    # atk_resnet = APGD(norm_resnet, norm='Linf', eps=8/255, steps=100, n_restarts=1, seed=0, loss='ce', eot_iter=1, rho=.75, verbose=False)
+    # atk_resnet = Jitter(norm_resnet, eps=8/255, alpha=2/255, steps=40, scale=10, std=0.1, random_start=True)
+
+    # atk_densenet = CW(norm_densenet, c=1, kappa=0, steps=1000, lr=0.01)
+    # atk_densenet = PGD(norm_densenet, eps=8/255, alpha=1/255, steps=40, random_start=True)
+    # atk_densenet = DIFGSM(norm_densenet, eps=8/255, alpha=2/255, decay=0.0, steps=20, random_start=True)
+    # atk_densenet = AutoAttack(norm_densenet, norm='Linf', eps=8/255, version='standard', n_classes=10, seed=None, verbose=False)
+    # atk_densenet = APGD(norm_densenet, norm='Linf', eps=8/255, steps=100, n_restarts=1, seed=0, loss='ce', eot_iter=1, rho=.75, verbose=False)
+    # atk_densenet = Jitter(norm_densenet, eps=8/255, alpha=2/255, steps=40, scale=10, std=0.1, random_start=True)
+    
     adv_images = atk_resnet(x, labels)
-    #adv_images = atk_densenet(x, labels)
+    # adv_images = atk_densenet(x, labels)
     return adv_images
 
 use_cuda = torch.cuda.is_available()
@@ -147,14 +157,14 @@ transform_test = transforms.Compose([
             # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 testset = MyDataset(transform=transform_test)
-testloader = data.DataLoader(testset, batch_size=128, shuffle=False)
+testloader = data.DataLoader(testset, batch_size=256, shuffle=False)
 
 # Model
 resnet = load_model('resnet50').cuda()
-resnet.load_state_dict(torch.load('./checkpoints/resnet_test_drrlw.pth')['state_dict'])
+resnet.load_state_dict(torch.load('./checkpoints/resnet_train.pth')['state_dict'])
 resnet.eval()
 densenet = load_model('densenet121').cuda()
-densenet.load_state_dict(torch.load('./checkpoints/densenet_test_drrlw.pth')['state_dict'])
+densenet.load_state_dict(torch.load('./checkpoints/densenet_train.pth')['state_dict'])
 densenet.eval()
 
 resnet_accs = AverageMeter()
@@ -183,5 +193,5 @@ for (input_, soft_label) in tqdm(testloader):
 images_adv = np.round(np.array(inputs_adv)).astype(np.uint8)
 labels_adv = np.array(labels)
 
-np.save('./datasets/test_DIFGSM_resnet_image.npy', images_adv)
-np.save('./datasets/test_DIFGSM_resnet_label.npy', labels_adv)
+np.save('./datasets/train5_PGD_resnet_image.npy', images_adv)
+np.save('./datasets/train5_PGD_resnet_label.npy', labels_adv)
