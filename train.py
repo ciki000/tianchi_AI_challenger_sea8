@@ -30,8 +30,8 @@ torch.backends.cudnn.deterministic = True
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('data.npy')
-        labels = np.load('label.npy')
+        images = np.load('data_7.npy')
+        labels = np.load('label_7.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
@@ -127,7 +127,7 @@ def train(trainloader, model, optimizer):
     return losses.avg, accs.avg
 
 def save_checkpoint(state, arch):
-    filepath = os.path.join(arch + '.pth.tar')
+    filepath = os.path.join(arch + '_7.pth.tar')
     torch.save(state, filepath)
 
 if __name__ == '__main__':

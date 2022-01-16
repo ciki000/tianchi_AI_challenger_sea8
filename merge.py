@@ -18,7 +18,7 @@ from config import args_resnet, args_densenet
 from utils import load_model, AverageMeter, accuracy
 
 
-datasets = ['./datasets/train1_PGD_densenet', './datasets/train2_PGD_densenet', './datasets/train3_PGD_densenet', './datasets/train4_PGD_densenet', './datasets/train5_PGD_densenet']
+datasets = ['./datasets/cifar_train1', './datasets/cifar_train2', './datasets/cifar_train3', './datasets/cifar_train4', './datasets/train5_PGD_resnet']
 # datasets = ['./datasets/cifar_train1', './datasets/train2_PGD-8_densenet', './datasets/train3_PGD-8_resnet', './datasets/train4_PGD-4_densenet', './datasets/train5_PGD-4_resnet']
 images = []
 labels = []
@@ -44,5 +44,5 @@ images_merge = np.array(random_images).astype(np.uint8)
 labels_merge = np.array(random_labels)
 
 print(images_merge.shape, labels_merge.shape)
-np.save('data.npy', images_merge)
-np.save('label.npy', labels_merge)
+np.save('data_7.npy', images_merge)
+np.save('label_7.npy', labels_merge)

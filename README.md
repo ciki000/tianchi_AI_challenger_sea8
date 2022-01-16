@@ -16,7 +16,7 @@
 12. PGD12d+2PGD12r+test+light+wasserstein: 97.8097
 12. PGD12d+2PGD12r+MI-DI-FGSM+light+wasserstein: 96.7933
 
-## 心得
+## 总结
 
 densenet121比resnet50鲁棒
 
@@ -24,3 +24,23 @@ numpy数组转化为uint8类型前记得round
 
 # 复赛
 ## 记录
+[模型测试记录](https://docs.qq.com/sheet/DTXZHZWhRSGFpYUps?tab=BB08J2)
+1. 5PGD-d
+2. rrrdd
+3. _rrdd
+4. ___rd
+5. ___rr
+6. ____d
+7. ____r
+
+## 总结
+
++ Bilateral Adversarial Training：
+
+    1.用更强的攻击来对抗训练不一定会得到更鲁棒的模型
+
+    2.梯度幅度小的模型相对会更鲁棒
+
++ soft label是否需要保持一致性？利用鲁棒模型蒸馏
+
+1w clean + 1w 类PGD + 1w wasserstein + 1w color +

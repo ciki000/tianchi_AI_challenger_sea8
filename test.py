@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import random
 import shutil
 from tqdm import tqdm
@@ -21,8 +21,8 @@ from utils import load_model, AverageMeter, accuracy
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self, transform):
-        images = np.load('./datasets/cifar_wasserstein_image.npy')
-        labels = np.load('./datasets/cifar_wasserstein_label.npy')
+        images = np.load('./datasets/cifar_test_image.npy')
+        labels = np.load('./datasets/cifar_test_label.npy')
         assert labels.min() >= 0
         assert images.dtype == np.uint8
         assert images.shape[0] <= 50000
@@ -56,14 +56,14 @@ transform_test = transforms.Compose([
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 testset = MyDataset(transform=transform_test)
-testloader = data.DataLoader(testset, batch_size=128, shuffle=False, num_workers=1)
+testloader = data.DataLoader(testset, batch_size=32, shuffle=False, num_workers=1)
 
 # Model
 resnet = load_model('resnet50').cuda()
-resnet.load_state_dict(torch.load('./checkpoints/resnet_test_2PGD-12dr.pth')['state_dict'])
+resnet.load_state_dict(torch.load('./checkpoints/resnet_train.pth')['state_dict'])
 resnet.eval()
 densenet = load_model('densenet121').cuda()
-densenet.load_state_dict(torch.load('./checkpoints/densenet_test_2PGD-12dr.pth')['state_dict'])
+densenet.load_state_dict(torch.load('./checkpoints/densenet_train.pth')['state_dict'])
 densenet.eval()
 
 resnet_accs = AverageMeter()
